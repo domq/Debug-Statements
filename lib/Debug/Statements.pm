@@ -208,10 +208,16 @@ sub dx {
 
     if ( !$globalPrintCounter ) {
         print "DEBUG:  Debug::Statements::d() is printing debug statements\n";
-        my $originalCmdLine = qx/ps -o args $$/;
-        $originalCmdLine =~ s/COMMAND\n//;
-        chomp($originalCmdLine);
-        print "DEBUG:  The debugged script was run as $originalCmdLine\n";
+        my $windows = ($^O =~ /Win/) ? 1 : 0;
+        my $originalCmdLine;
+        if ($windows) {
+            # Don't know how to do this on Windows
+        } else {
+            $originalCmdLine = qx/ps -o args $$/;
+            $originalCmdLine =~ s/COMMAND\n//;
+            chomp($originalCmdLine);
+            print "DEBUG:  The debugged script was run as $originalCmdLine\n";
+        }
     }
 
     $globalPrintCounter++;
@@ -613,11 +619,20 @@ sub ls {
     if ($id) { print "internaldebug ls:  \$level = '$level'\n" }
     my $h = PadWalker::peek_my(1);
     return if not checkLevel( $h, $level );
+    my $windows = ($^O =~ /Win/) ? 1 : 0;
+    my $command;
     for my $file ( split /\s+/, $filenames ) {
-        my $command = "ls -l $file";
+        if ( $windows ) {
+            $command = "dir $file";
+        } else {
+            $command = "ls -l $file";
+        }
         if ($id) { print "internaldebug ls:  \$command = '$command'\n" }
         my $lsl;
-        if ( -f $file or -d $file ) {
+        if ( -d $file or -f $file ) {
+            $lsl = `$command`;
+            chomp $lsl;
+        } elsif ( -f $file ) {
             $lsl = `$command`;
             chomp $lsl;
         } else {
@@ -675,8 +690,6 @@ sub evlwrapper {
 
 1;
 
-__END__
-
 =head1 NAME
 
 Debug::Statements provides an easy way to insert and enable/disable debug statements.
@@ -685,15 +698,15 @@ Debug::Statements provides an easy way to insert and enable/disable debug statem
 
 The C<d()> function prints the name of the variable AND its value.
 
-This implementation been optimized to save programmer keystrokes (yours).
+This implementation been optimized to minimize programmer keystrokes (yours).
 
 =head2 Example code
 
-    use Debug::Statements;
-    my $d = 1;
     my $myvar = 'some value';
     my @list = ('zero', 1, 'two', "3");
     my %hash = ('one' => 2, 'three' => 4);
+    use Debug::Statements;
+    my $d = 1;
     d "Hello world";
     d '$myvar';
     d '@list %hash';
@@ -716,6 +729,28 @@ This implementation been optimized to save programmer keystrokes (yours).
 
 =head1 BACKGROUND
 
+=head2 Advantages of debug statements:
+    
+=over
+
+"The most effective debugging tool is still careful thought, coupled with judiciously placed print statements" - Brian Kernighan, "Unix for Beginners" (1979)
+
+Familiarity - everyone has used them.
+
+When strategically placed, they show the values of key variables as well as the flow of control.																													          
+
+May be left in the code to facilitate debugging, when the code next needs to be enhanced.
+
+May be turned on to help remotely debug problems.
+
+Printing the names of executing subroutines can be particularly useful when debugging large unfamiliar programs produced by multiple developers over the span of years.	
+
+Can be used in conjuction with a debugger, which can be used to change variables on-the-fly, step into libraries, or skip/repeat sections of code
+
+If the results are saved to a file, file comparisons can be useful during regression testing.
+
+=back
+
 =head2 Traditional debug statement example:
     
     my $d = 1;
@@ -725,29 +760,7 @@ This implementation been optimized to save programmer keystrokes (yours).
     if ($d) { print "\nDEBUG: Dumping \@list:\n"; Dumpvalue->new->dumpValue(\@list) }
     if ($d) { print "\nDEBUG: Dumping \%hash:\n"; Dumpvalue->new->dumpValue(\%hash) }
 
-=head2 Advantages of traditional "print" debug statements:
-    
-=over
-
-"The most effective debugging tool is still careful thought, coupled with judiciously placed print statements" - Brian Kernighan, "Unix for Beginners" (1979)
-
-Familiarity.  Everyone has used them.
-
-When strategically placed, they show the values of key variables as well as the flow of control.																													          
-
-May be left in the code to facilitate debugging, when the code next needs to be enhanced.
-
-May be turned on to help remotely debug and find solutions around problems.
-
-Printing the names of subroutines executing can be particularly useful when debugging large unfamiliar programs produced by multiple developers over the span of years.	
-
-Can be used in conjuction with a debugger, which can be used to change variables on-the-fly, step into libraries, or skip/repeat sections of code
-
-If the results are saved to a file, file comparisons can be useful during regression testing.
-
-=back
-
-=head2 Disadvantages:
+=head2 Disadvantages of traditional "print" debug statements:
     
 =over
 
@@ -757,7 +770,7 @@ Reduces readability of the source code.
 
 Print statements clutter the standard output
 
-Need to be removed or commented out
+Need to be removed or commented out later
 
 If some statements are mistakenly left in, the output can cause problems or confusion
 
@@ -765,13 +778,13 @@ The next time the code needs to be enhanced, any removed print statements need t
 
 =back
 
-=head1 Debug::Statements EXAMPLE
+=head1 Debug::Statements Example:
 
 C<Debug::Statements::d()> provides an easy way to insert and enable/disable debug statements.
 
+    my $myvar = 'some value';
     use Debug::Statements;
     my $d = 1;
-    my $myvar = 'some value';
     d '$myvar';
 
 =head2 Output:
@@ -804,9 +817,11 @@ This is all you need to know to get started.
 =head2 Multiple debug levels:
     
     use Debug::Statements qw(d d2 d0 D);
+    
     my $d = 1;
     d '$myvar';    # prints
     d2 '$myvar';   # does not print since $d < 2
+    
     $d = 2;
     d '$myvar';    # prints
     d2 '$myvar';   # prints
@@ -833,20 +848,20 @@ This is all you need to know to get started.
     or
     d '($myvar, $myvar2, $myvar3)';
     
-Each of these examples prints three lines
+Each of these examples prints one line each for $myvar, $myvar2, and $myvar3
 
-=head2 Alternate syntax:
+=head2 Alternate syntax with parentheses:
     
     d('$myvar');
     
 =head1 OPTIONS
 
-Options may be specifed with an optional 2nd argment to C<d()>:
+Options may be specifed with an 2nd argment to C<d()>:
 
 =over
 
 B<b>
-print suBroutine name (default)
+print suBroutine name (on by default)
 
 B<c>
 Chomp newline before printing, useful when printing captured $line from a parsed input file
@@ -887,15 +902,15 @@ To print %hash in a compressed format
   
    d('%hash', 'z');
 
-=head2 More about options
-
-Options are only valid for the current debug statement
+=head2 Negating options:
 
 To negate an option, capitialize it (use 'B' instead of 'b')
 
-=head2 Global options:
+=head2 Persistent options:
+    
+Options are only valid for the current debug statement
 
-To make the current options global (peristent), append a *
+To make the current options global (peristent), append a star *
 
 For example, to set timestamp globally:
 	
@@ -909,6 +924,12 @@ For example, to unset timestamp globally:
 
 B<PadWalker must be installed>
 
+=over
+
+http://search.cpan.org/~robin/PadWalker-2.0/PadWalker.pm
+
+=back
+
 In addition, the test suites require Test::Fatal, Test::More, and Test::Output
   
 =head2 $d variable   
@@ -921,6 +942,8 @@ $d was chosen because it is easy to type and intuitive
 
 If your code already uses '$d' for another purpose, this can be changed with C<Debug::Statements::setFlag()>
 
+Your code must not already contain a local subroutine called 'd()', since this function is imported
+
 Consider enabling $d through the command line of your script:
     
     use Getopt::Long;
@@ -928,13 +951,13 @@ Consider enabling $d through the command line of your script:
     my $d = 0;
     GetOptions( \%opt, 'd' => sub{$d=1}, 'dd' => sub{$d=2}, ... );
 
-Your code must not already contain a local subroutine called 'd()', since this function is imported
+This provides an easy way for others to set your code into debug mode.  They can then capture stdout and email it to you.
 
 =head2 Quoting
 
 Calls to d() should use 'single quotes' instead of "double quotes"
 
-Exception:  To produce custom output, call d() with double-quotes.  As is always the case with double-quotes in Perl, variables will be interpolated into values before reaching the d() subroutine.
+Exception:  To produce custom output, call d() with double-quotes.  As is always the case with double-quotes in Perl, variables will be interpolated into values before entering the d() subroutine.
 
 =head3 Example #1:
 
@@ -942,7 +965,7 @@ Exception:  To produce custom output, call d() with double-quotes.  As is always
     
 =head3 Output #1:
     
-    DEBUG sub abc:  Found pattern asdf in file foo.txt
+    DEBUG sub mysub:  Found pattern asdf in file foo.txt
 
 =head3 Example #2:
 
@@ -950,7 +973,7 @@ Exception:  To produce custom output, call d() with double-quotes.  As is always
     
 =head3 Output #2:
     
-    DEBUG sub abc:  Found foo and replaced with bar on:  foobar
+    DEBUG sub mysub:  Found foo and replaced with bar on:  foobar
 
 Remember that when using escaped \$ \@ \% within "double quotes",
 this is equivalent to using $ @ % within 'single quotes'
@@ -969,21 +992,21 @@ The module includes functions which affect global operation:
 
 =head1 LIMITATIONS
 
-Does not support:
+Not supported:
 
 =over
 
-array slices such as C<$listvar[1:3]>
+Array slices such as C<$listvar[1:3]>
 
-some special variables such as C<$1 $_ @_>
-      ...but any of these IS supported when using "double quotes",
-        since this will cause Perl itself to evaluate the expression before calling d().  For example:  d "@_"
+Some special variables such as C<$1 $_ @_>
+...but any of these can be printed by using "double quotes",
+since this will cause Perl to evaluate the expression before calling d().  For example:  d "@_"
         
 The evaluation is of variables does not support the full range of Perl syntax.
-      Most cases work, for example:  d '$hash{$key}'
-      However hashes used as hash keys will not work, for example:  C<d '$hash{$hash2{$key}}'>
-      As a workaround, use "double quotes":  C<d "\$hash{$hash2{$key}}"> instead.
-      The rule is similar for arrays
+Most cases work, for example:  C<d '$hash{$key}'>
+However hashes used as hash keys will not work, for example:  C<d '$hash{$hash2{$key}}'>
+As a workaround, use "double quotes":  C<d "\$hash{$hash2{$key}}"> instead.
+The rule is similar for arrays
 
 =back
 
@@ -996,38 +1019,44 @@ ls() is also provided for convenience, but not exported by default
     use Debug::Statements qw(d d0 d1 d2 d3 D ls);
     ls($myfilename);
     
-When $d==1, this prints an ls -l listing of $myfilename.
+When $d >= 1, prints an ls -l listing of $myfilename.
 
 Note that ' ' is not used inside ls()
 
-=head1 ADVANCED
+=head1 Perl versions:
 
-=head2 Perl versions:
+This module has been tested on:
+    
+=over
+    
+Linux 5.8.6, 5.8.8, 5.12, 5.14, and 5.20.  It may even work on 5.006
 
-This module has been tested on 5.8.6, 5.8.8, 5.12, 5.14, and 5.20
+Windows 5.20
 
-It may even work on 5.006
+=back
+
+=head1 GORY DETAILS
       
 =head2 How it works:
 
-C<PadWalker::peek_my()> gets the value of $d and the contents of your variable (from outside its scope!)
+C<PadWalker::peek_my()> gets the value of $d and the contents of your variables (from outside its scope!)  The variable values are stored in an internal hash reference
 
-This is stored in the internal hash reference $h
+It does NOT change the values of your variables.
 
 C<caller()[3]> gets the name of subroutine which encloses your code
 
 C<Data::Dumper> pretty-prints the contents of your variable
 
-=head1 Performance:
+=head2 Performance:
 
-For performance-critical applications, the calls to C<PadWalker::peek_my()> and C<caller()> may be problematic
+For performance-critical applications, frequent calls to C<PadWalker::peek_my()> and C<caller()> may be too intensive
 
-=head2 Solutions:
+=head3 Solutions:
 
 =over
 
 Globally disable all functionality by calling C<Debug::Statements::disable();>
-The PadWalker and caller functions will not be called.  No DEBUG statements will be printed.
+The PadWalker and caller functions will not be called.  Debug statements will not be printed.
 
 A second technique is to comment out some of your calls to C<d()> within performance-critical loops
 
@@ -1038,14 +1067,9 @@ A third technique to completely disable this code is to define you own empty d()
 
 =back
 
-=head2 Debugging this module:
-
-To turn on internal debug print statements, set $d to be negative.
-  
 =head1 AUTHOR
 
 Chris Koknat 2014 chris.koknat@gmail.com
 
 =cut
-
 

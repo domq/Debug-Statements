@@ -9,11 +9,12 @@ use strict;
 #use autodie;
 sub say { print @_, "\n" }
 use warnings FATAL => 'all';
+use Cwd qw(getcwd);
 use Getopt::Long;
 use Test::More;
 use Test::Fatal qw(lives_ok dies_ok);
 use Test::Output qw(stdout_is stdout_like);
-# FindBin helps t/DebugStatementsTest.t find lib/Debug/Statements.pm
+# FindBin helps t/DebugStatementsTest.t find lib/Debug/Statements.pm during 'dzil test'
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use Debug::Statements qw(d d0 d1 d2 d3 D ls);
@@ -647,20 +648,30 @@ sub testOption_Die {
 
 sub testLsl {
     say "\n### testLsl";
-    my $filename = "/etc/motd";
+    my $rd;
+    my $windows = ($^O =~ /Win/) ? 1 : 0;
+    if ( $windows ) {
+        # Volume in drive C is OSDisk
+        $rd = '\s*Volume in';
+    } else {
+        # -rwxrwxr-x  1 ckoknat hardware 29506 Dec 18 11:28 DebugStatementsTest.t
+        $rd = '\S+\s+\d+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+';
+    }
     $d = 1;
-    my $rd = '\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+';
     my $header = 'DEBUG:  ls -l = ';
+    tdd { ls("filename_does_not_exist") }  qr(does not exist), 'ls(filename_does_not_exist)';
+    tdd { ls('$filename') }                qr(did not understand file name), "ls('\$filename') error";
+    tdd { ls($0) }                         qr($header$rd), "File ls($0)";
     if ( $] lt '5.018' ) {
-        tdd { ls("/etc/motd") }              qr($header$rd), 'ls("/etc/motd")';
-        tdd { ls($filename) }                qr($header$rd), 'ls($filename)';
-        tdd { ls("/etc") }                   qr(${header}total\s+\S+\n$rd), 'ls("/etc")';
-        tdd { ls("$filename $filename") }    qr($header$rd\n$header$rd), 'ls("$filename $filename")';
-        tdd { ls("$filename /etc") }         qr(${header}total\s+\S+\n$rd), 'ls("$filename /etc")';
-        #tdd { ls($filename), 2 }  '', 'ls() with too high a debug level';
-        tdd { ls("filename_does_not_exist") }  qr(does not exist), 'ls(filename_does_not_exist)';
-        tdd { ls('$filename') }  qr(did not understand file name), "ls('\$filename') error";
+        my $dirname = getcwd;
+        if ( $windows ) {
+            $dirname =~ s{/}{\\}g;
+            #d '$dirname';
+        }
+        tdd { ls($dirname) }                   qr($header$rd), "Directory ls($dirname)";
+        tdd { ls("$0 $0") }                    qr($header$rd.*\n$header$rd), "ls($0 $0)";
+        tdd { ls("$0 $dirname") }              qr($header$rd.*\n$header$rd), "ls($0 $dirname)";
+        ##tdd { ls($filename), 2 }  '', 'ls() with too high a debug level';
     }
 }
-__END__
 
