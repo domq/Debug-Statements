@@ -31,4 +31,4 @@ requires:
   perl: '5.006'
   strict: '0'
   warnings: '0'
-version: '1.000'
+version: '1.001'
