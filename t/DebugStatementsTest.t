@@ -9,7 +9,6 @@ use strict;
 #use autodie;
 sub say { print @_, "\n" }
 use warnings FATAL => 'all';
-use Cwd qw(getcwd);
 use Getopt::Long;
 use Test::More;
 use Test::Fatal qw(lives_ok dies_ok);
@@ -664,14 +663,9 @@ sub testLsl {
     tdd { ls('$filename') }                qr(did not understand file name), "ls('\$filename') error";
     tdd { ls($0) }                         qr($header$rd), "File ls($0)";
     if ( $] lt '5.018' ) {
-        my $dirname = getcwd;
-        if ( $windows ) {
-            $dirname =~ s{/}{\\}g;
-            #d '$dirname';
-        }
-        tdd { ls($dirname) }                   qr($header$rd), "Directory ls($dirname)";
-        tdd { ls("$0 $0") }                    qr($header$rd.*\n$header$rd), "ls($0 $0)";
-        tdd { ls("$0 $dirname") }              qr($header$rd.*\n$header$rd), "ls($0 $dirname)";
+        tdd { ls('.') }                    qr($header$rd), "Directory ls(.)";
+        tdd { ls("$0 $0") }                qr($header$rd.*\n$header$rd), "ls($0 $0)";
+        tdd { ls("$0 .") }                 qr($header$rd.*\n$header$rd), "ls($0 .)";
         ##tdd { ls($filename), 2 }  '', 'ls() with too high a debug level';
     }
 }

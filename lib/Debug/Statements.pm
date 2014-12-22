@@ -10,18 +10,20 @@ $Data::Dumper::Terse = 1;    # eliminate the $VAR1
 
 use Exporter;
 use base qw( Exporter );
-our @EXPORT    = qw( d d0 d1 d2 d3 D );
+our @EXPORT    = qw( d d0 d2 d3 D );
 our @EXPORT_OK = qw( d d0 d1 d2 d3 ls D );
+
+my $VERSION = '1.004';
 
 my $printdebug = "DEBUG:  ";    # print statement begins with this
 my $id         = 0;             # for debugging this module, turn on with d('', 10)
 my $flag       = '$d';          # choose another variable besides '$d'
 my $disable    = 0;             # disable all functionality (for performance)
-if ( not eval "use PadWalker; 1" ) {
+if ( not eval "use PadWalker; 1" ) {  ## no critic
     $disable = 1;
     print "Did not find PadWalker so disabling Debug::Statements - d()\n";
     print "    Please install PadWalker from CPAN\n";
-    eval 'sub d {}; sub d0 {}; sub d1 {} ; sub d2 {} ; sub d3 {} ; sub D {} ; sub ls {}';
+    eval 'sub d {}; sub d0 {}; sub d1 {} ; sub d2 {} ; sub d3 {} ; sub D {} ; sub ls {}';  ## no critic
 }
 my $truncateLines      = 10;
 my $globalPrintCounter = 0;
@@ -468,7 +470,7 @@ sub handlelocalvar {
         my $sigil = $1;
         ( my $var2 = $var ) =~ s/^([\$\@\%])//;
         #print "\$var = $var\n";
-        no strict 'refs';
+        no strict 'refs';  ## no critic
         if ( $sigil eq '$' ) {
             #print "Dumper cleanvar>" . Dumper( %$var2 ) . "<\n";
             return cleanDump( \$$var2, $opt );
@@ -685,11 +687,12 @@ sub evlwrapper {
     my ( $h, $expression, $description ) = @_;
     if ($id) { print "internaldebug:  evaling ($evalcounter) $description\n" }
     $evalcounter++;
-    return eval($expression);
+    return eval($expression);  ## no critic
 }
 
 1;
 
+__END__
 
 =head1 NAME
 
@@ -1056,6 +1059,8 @@ This module has been tested on
 =item *
 Linux 5.8.6, 5.8.8, 5.12, 5.14, and 5.20
 
+It will probably work as far back as 5.8.0
+
 =item *
 Windows 5.20
 
@@ -1109,3 +1114,4 @@ This software is copyright (c) 2013-14 by Chris Koknat.
 This is free software; you can redistribute it and/or modify it under the same terms as the Perl 5 programming language system itself.
 
 =cut
+

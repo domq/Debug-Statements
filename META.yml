@@ -3,7 +3,6 @@ abstract: 'Debug::Statements provides an easy way to insert and enable debug sta
 author:
   - 'Chris Koknat <chris.koknat@gmail.com>'
 build_requires:
-  Cwd: '0'
   FindBin: '0'
   Getopt::Long: '0'
   Test::Fatal: '0'
@@ -32,4 +31,4 @@ requires:
   perl: '5.006'
   strict: '0'
   warnings: '0'
-version: '1.003'
+version: '1.004'
