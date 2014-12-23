@@ -13,7 +13,7 @@ use base qw( Exporter );
 our @EXPORT    = qw( d d0 d2 d3 D );
 our @EXPORT_OK = qw( d d0 d1 d2 d3 ls D );
 
-my $VERSION = '1.004';
+my $VERSION = '1.005';
 
 my $printdebug = "DEBUG:  ";    # print statement begins with this
 my $id         = 0;             # for debugging this module, turn on with d('', 10)

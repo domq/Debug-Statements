@@ -26,6 +26,8 @@ my %WriteMakefileArgs = (
     "Dumpvalue" => 0,
     "Exporter" => 0,
     "PadWalker" => 0,
+    "Test::Perl::Critic" => 0,
+    "Test::Pod" => 0,
     "Time::HiRes" => 0,
     "base" => 0,
     "strict" => 0,
@@ -39,7 +41,7 @@ my %WriteMakefileArgs = (
     "Test::Output" => 0,
     "lib" => 0
   },
-  "VERSION" => "1.004",
+  "VERSION" => "1.005",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -58,6 +60,8 @@ my %FallbackPrereqs = (
   "Test::Fatal" => 0,
   "Test::More" => 0,
   "Test::Output" => 0,
+  "Test::Perl::Critic" => 0,
+  "Test::Pod" => 0,
   "Time::HiRes" => 0,
   "base" => 0,
   "lib" => 0,
