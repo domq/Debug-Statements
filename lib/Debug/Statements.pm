@@ -305,7 +305,7 @@ sub dumpvar {
 
     # Convert ${var} to ${var}
     if ($id) { print "internaldebug dumpvar:  \$vvar = '$var'\n" }
-    $var =~ s/^([\$\@\%]){(\S+)}$/$1$2/;
+    $var =~ s/^([\$\@\%])\{(\S+)\}$/$1$2/;
     if ($id) { print "internaldebug dumpvar:  \$vvar = '$var'\n" }
 
     # Convert $h->{'$listvar[0]'}      to  $h->{'@listvar'}[0]
@@ -407,7 +407,7 @@ sub dumpvar {
         # Special variables
         # Package variables
         elsif (( $var =~ /^(\$0|\$\$|\$\?|\$\.|\@ARGV|\$LIST_SEPARATOR|\$PROCESS_ID|\$PID|\$PROGRAM_NAME|\$REAL_GROUP_ID|\$GID|\$EFFECTIVE_GROUP_ID|\$EGID\|\$REAL_USER_ID|\$UID|\$EFFECTIVE_USER_ID|\$EID|\$SUBSCRIPT_SEPARATOR|\$SUBSEP|\%ENV|\@INC|\$INPLACE_EDIT|\$OSNAME|\%SIG|\$BASETIME|\$PERL_VERSION|\$EXECUTABLE_NAME|\$MATCH|\$PREMATCH|\$POSTMATCH|\$ARGV|\@ARGV|\$OUTPUT_FIELD_SEPARATOR|\$INPUT_LINE_NUMBER|\$NR|\$INPUT_RECORD_SEPARATOR|\$RS|\$OUTPUT_RECORD_SEPARATOR|\$ORS|\$OUTPUT_AUTOFLUSH)$/ )
-            or ( $var =~ /^[\$\@\%]{?[a-zA-Z_][\w:{}\[\]]*$/ and $var =~ /::/ ) )
+            or ( $var =~ /^[\$\@\%]\{?[a-zA-Z_][\w:{}\[\]]*$/ and $var =~ /::/ ) )
         {
             return handlelocalvar( $var, $opt );
         }
@@ -417,7 +417,7 @@ sub dumpvar {
             return;
         }
         # $scalar @list %hash
-        elsif ( $var =~ /^[\$\@\%]{?[a-zA-Z_][\w{}\[\]]*$/ ) {
+        elsif ( $var =~ /^[\$\@\%]\{?[a-zA-Z_][\w{}\[\]]*$/ ) {
             # normal variable
             $reference = $h->{$var};
         }
